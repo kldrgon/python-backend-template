@@ -1,0 +1,7 @@
+system.enableReadFromSecondaryVisibility:
+  - value: false
+    constraints: {}
+
+frontend.enableUpdateWorkflowExecution:
+  - value: true
+    constraints: {}

@@ -1,0 +1,170 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backend-base-env-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_APP_DB}
+      POSTGRES_APP_DB: ${POSTGRES_APP_DB}
+      POSTGRES_TEMPORAL_DB: ${POSTGRES_TEMPORAL_DB}
+      POSTGRES_TEMPORAL_VISIBILITY_DB: ${POSTGRES_TEMPORAL_VISIBILITY_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - base-env-net
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: backend-base-env-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_EXTERNAL_PORT}:9094"
+    environment:
+      KAFKA_KRAFT_CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID}
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://${KAFKA_EXTERNAL_HOST}:${KAFKA_EXTERNAL_PORT}
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    networks:
+      - base-env-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: backend-base-env-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - base-env-net
+
+  temporal-schema-setup:
+    image: temporalio/admin-tools:latest
+    container_name: backend-base-env-temporal-schema-setup
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: postgres
+      DBNAME: ${POSTGRES_TEMPORAL_DB}
+      VISIBILITY_DBNAME: ${POSTGRES_TEMPORAL_VISIBILITY_DB}
+    volumes:
+      - ./temporal/setup-postgres.sh:/etc/temporal/setup-postgres.sh:ro
+    command: ["/bin/sh", "/etc/temporal/setup-postgres.sh"]
+    networks:
+      - base-env-net
+
+  temporal:
+    image: temporalio/server:latest
+    container_name: backend-base-env-temporal
+    restart: unless-stopped
+    depends_on:
+      temporal-schema-setup:
+        condition: service_completed_successfully
+    environment:
+      DB: postgres12
+      DBNAME: ${POSTGRES_TEMPORAL_DB}
+      VISIBILITY_DBNAME: ${POSTGRES_TEMPORAL_VISIBILITY_DB}
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: postgres
+      SKIP_SCHEMA_SETUP: "true"
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/config/dynamicconfig/base-env.yaml
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CLI_ADDRESS: temporal:7233
+    ports:
+      - "${TEMPORAL_PORT}:7233"
+    volumes:
+      - ./temporal/dynamicconfig/base-env.yaml:/etc/temporal/config/dynamicconfig/base-env.yaml:ro
+    networks:
+      - base-env-net
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: backend-base-env-temporal-ui
+    restart: unless-stopped
+    depends_on:
+      temporal:
+        condition: service_started
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:${TEMPORAL_UI_PORT}
+    ports:
+      - "${TEMPORAL_UI_PORT}:8080"
+    networks:
+      - base-env-net
+
+  # Optional: enable only when you need S3-compatible object storage.
+  # The application currently defaults to local blob storage.
+  #
+  # minio:
+  #   image: quay.io/minio/minio:RELEASE.2025-09-06T17-38-46Z
+  #   container_name: backend-base-env-minio
+  #   restart: unless-stopped
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  #   ports:
+  #     - "${MINIO_API_PORT}:9000"
+  #     - "${MINIO_CONSOLE_PORT}:9001"
+  #   volumes:
+  #     - minio_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "mc", "ready", "local"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #   networks:
+  #     - base-env-net
+
+volumes:
+  postgres_data:
+  kafka_data:
+  redis_data:
+  # minio_data:
+
+networks:
+  base-env-net:
+    driver: bridge

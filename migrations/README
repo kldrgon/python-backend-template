@@ -1,0 +1,18 @@
+Generic single-database configuration.
+
+常用命令(最小集)
+
+alembic -c alembic.ini current
+  查看当前数据库对应的迁移版本号(rev)
+
+alembic -c alembic.ini upgrade head
+  升级到最新迁移版本
+
+alembic -c alembic.ini downgrade -1
+  回退 1 个迁移版本
+
+alembic -c alembic.ini revision -m "你的描述" --rev-id 20260105_1530
+  新建空迁移脚本；"你的描述" 是说明文字；--rev-id 用来指定迁移版本号(也会作为文件名开头)，建议用时间戳方便按文件名排序
+
+alembic -c alembic.ini revision -m "你的描述" --autogenerate --rev-id 20260105_1530
+  基于模型/数据库差异自动生成迁移脚本；同样建议用 --rev-id 时间戳来做文件名排序

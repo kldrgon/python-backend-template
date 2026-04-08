@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: backend-template:latest
+    container_name: backend-template-backend
+    restart: unless-stopped
+    ports:
+      - "20008:8000"
+    environment:
+      - ENV=prod
+      - DEBUG=false
+      - LOG_JSON_FORMAT=true  # 生产环境使用 JSON 日志
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    command: ["uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers"]
+    # 日志配置：自动旋转
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"      # 单文件最大 10MB
+        max-file: "5"        # 保留 5 个文件
+        compress: "true"     # 压缩旧日志
+    networks:
+      - backend-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  workflow-launcher:
+    image: backend-template:latest
+    container_name: backend-template-workflow-launcher
+    restart: unless-stopped
+    environment:  
+      - ENV=prod
+      - LOG_JSON_FORMAT=true
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    command: ["python", "workflow_launcher.py"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    networks:
+      - backend-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  worker:
+    image: backend-template:latest
+    container_name: backend-template-worker
+    restart: unless-stopped
+    environment:
+      - ENV=prod
+      - LOG_JSON_FORMAT=true
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    command: ["python", "worker.py"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    networks:
+      - backend-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  outbox-beat:
+    image: backend-template:latest
+    container_name: backend-template-outbox-beat
+    restart: unless-stopped
+    environment:
+      - ENV=prod
+      - LOG_JSON_FORMAT=true
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    command: ["python", "outbox_beat.py", "--interval", "120"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    networks:
+      - backend-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  backend-net:
+    driver: bridge
