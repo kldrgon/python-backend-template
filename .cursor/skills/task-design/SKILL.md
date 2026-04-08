@@ -102,6 +102,7 @@ Preflight 只做最小分流，不重复项目全部规则细节。
 ## Required Behavior
 
 - 先做最小 preflight，再输出简短思路。
+- 需要时再补看相关项目规范。
 - 如果关键信息不足，先问，不擅自假设。
 - 如果需求还不稳定，不把未确认内容写成定稿结论。
 - 如果需要留痕或评审，明确提示转入 `design-doc`。
@@ -148,5 +149,5 @@ Preflight 只做最小分流，不重复项目全部规则细节。
 
 设计完成后，按任务类型提示后续应参考的 skill：
 
-- 需要按项目静态规则判断落点：`project-structure-and-rules`
+- 需要判断代码落点、API、命名、测试或提交边界：查看 `project-structure-and-rules`
 - 进入长流程分支执行：`branch-workflow`

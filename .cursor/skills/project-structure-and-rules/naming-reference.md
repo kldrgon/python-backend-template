@@ -65,3 +65,60 @@ Event:
 - <Aggregate>UpdatedEvent
 - <Capability>TriggeredEvent
 ```
+
+## Concrete Naming Example
+
+如果要新增课程仓储、查询服务和创建请求模型：
+
+```text
+Repository:
+- interface: CourseRepository
+- implementation: SQLAlchemyCourseRepository
+
+QueryService:
+- interface: CourseQueryService
+- implementation: SQLAlchemyCourseQueryService
+
+DTO:
+- CreateCourseRequest
+- CourseDetailResponse
+```
+
+## Real Code Example
+
+项目里的真实命名形态如下：
+
+```python
+class CourseQueryService(Protocol):
+    async def get_course(self, *, course_id: str) -> CourseDTO | None:
+        ...
+
+
+class SQLAlchemyCourseQueryService(CourseQueryService):
+    async def get_course(self, *, course_id: str) -> CourseDTO | None:
+        stmt = select(CourseModel).where(CourseModel.course_id == course_id)
+        ...
+```
+
+```python
+class SQLAlchemyUserRepository(BaseAggregateRepository, UserRepository):
+    async def get_user_by_id(self, *, user_id: str) -> User | None:
+        stmt = await session.execute(
+            _with_relations(select(UserModel).where(UserModel.user_id == user_id))
+        )
+        ...
+```
+
+```python
+class CreateCourseRequest(BaseModel):
+    title: str = Field(..., min_length=1)
+    summary: list | None = None
+    content: list | None = None
+```
+
+这些真实代码分别对应：
+
+- 查询接口：`CourseQueryService`
+- 查询实现：`SQLAlchemyCourseQueryService`
+- 仓储实现：`SQLAlchemyUserRepository`
+- 请求 DTO：`CreateCourseRequest`

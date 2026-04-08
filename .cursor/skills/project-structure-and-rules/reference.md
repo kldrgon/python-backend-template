@@ -2,7 +2,7 @@
 
 ## Recommended Coverage
 
-这个总 skill 适合集中收这些规则：
+当你需要展开查看细节时，重点看这些主题：
 
 - 目录结构
 - 分层边界
@@ -25,7 +25,7 @@
 
 ## Reading Strategy
 
-建议先读主 `SKILL.md`，只在命中下面情况时再回读对应 reference：
+建议先参考适用的项目静态规则，只在下面情况时再查看对应 reference：
 
 - 代码放置和分层问题：读 `architecture-reference.md`
 - 上下文是否采用领域模型、是否允许轻量实现：读 `architecture-reference.md`
@@ -35,12 +35,21 @@
 - 测试问题：读 `testing-reference.md`
 - 提交边界问题：读 `commit-reference.md`
 
-## Suggested Split
+## Reading Examples
 
-如果项目准备收敛 skill 体系，推荐这样分：
+```text
+如果你在想“这段逻辑该放 domain 还是 application”：
+- 读 `architecture-reference.md`
 
-- `project-structure-and-rules`：集中放静态项目规则
-- `task-design`：处理前置分流和任务设计
-- `branch-workflow`：处理长流程执行
+如果你在想“这个路由、Request、Response 该怎么落”：
+- 读 `api-reference.md`
 
-如果后续需要文档型 skill，可再单独补 `design-doc`。
+如果你在想“仓储实现、查询服务、DTO 该怎么命名”：
+- 读 `naming-reference.md`
+
+如果你在想“这次该补 unit、integration 还是 system”：
+- 读 `testing-reference.md`
+
+如果你在想“这批改动能不能一起提交，是否混入无关文件”：
+- 读 `commit-reference.md`
+```

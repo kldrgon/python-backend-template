@@ -1,0 +1,15 @@
+---
+description: API 落点与命名规则
+globs: app/**/*.py
+alwaysApply: false
+---
+
+# API And Naming Rules
+
+- API 路由通常放 `app/<context>/adapter/input/api/v1/`。
+- 路由层只做接参、调用用例、返回响应、异常映射，不承载领域规则。
+- API DTO 与领域命令对象分离，不混用同一模型。
+- 命名先区分接口与实现，再区分层级。
+- `QueryService` 作为整体词，不拆写。
+- 采用领域模型时使用 `XxxRepository` / `SQLAlchemyXxxRepository` 命名。
+- 避免 `XxxSQLAlchemyRepository`、`SqlalchemyXxx...`、`SAXxx...` 这类变体。

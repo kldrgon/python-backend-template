@@ -1,0 +1,17 @@
+---
+description: 长流程分支执行约束
+globs:
+  - DEVELOP_TEMP/**/*.md
+alwaysApply: false
+---
+
+# Branch Workflow Conventions
+
+- 分支目标、工作载体、相关文档、commit 计划表未确认前，不进入连续开发。
+- 一个 commit 只做一件事，不混入无关改动。
+- 每个 commit 都必须能独立 quick review、独立提交。
+- quick review 只检查当前 commit，不替代正式 review。
+- branch readiness check 是分支级检查，不替代 PR review。
+- commit 计划表、子计划、重启占位符若为临时文档，默认放 `DEVELOP_TEMP/<timestamp>/`。
+- 任务中断恢复时，先看当前状态与下一步，不直接凭记忆继续。
+- 如果当前 commit 已明显过大、越界或缺少确认项，先停下拆分或补确认。

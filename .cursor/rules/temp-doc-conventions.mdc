@@ -1,0 +1,14 @@
+---
+description: 临时工作文档目录规范
+globs:
+  - DEVELOP_TEMP/**/*
+  - 开发用临时文档/**/*
+alwaysApply: false
+---
+
+# Temp Document Conventions
+
+- `DEVELOP_TEMP` 是工作目录，不是正式文档目录。
+- 临时设计稿、commit plan、sub plan、重启占位符默认放 `DEVELOP_TEMP/<timestamp>/`。
+- 时间戳目录使用 `YYYYMMDD_HHMMSS` 格式。
+- 临时文档只用于过程留痕，不替代正式设计文档或正式规范。

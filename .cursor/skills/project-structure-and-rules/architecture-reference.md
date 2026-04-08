@@ -56,6 +56,90 @@ app/<context>/
 - 读侧查询实现：放 `adapter/output/query/` 或 `query/`
 - 事件处理：放 `event_handler/`
 
+## Placement Example
+
+如果任务是“新增用户认证资源绑定用例”，可先这样放置：
+
+```text
+app/auth/
+├── domain/
+│   └── ...                # 认证资源绑定规则、不变量
+├── application/service/
+│   └── ...                # 绑定用例编排
+├── adapter/output/repository/
+│   └── ...                # 持久化写侧实现
+└── adapter/input/api/v1/
+    └── ...                # HTTP 路由、请求、响应
+```
+
+## Real Code Example: Port And Adapter
+
+下面是项目里真实存在的 `Port` 与 `Adapter` 形态：
+
+```python
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from app.qa.domain.vo import MessageRole
+
+
+class LLMMessage(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    role: str
+    content: str
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, value: str) -> str:
+        return MessageRole.normalize(value)
+
+
+class LLMPort(ABC):
+    @abstractmethod
+    async def chat_completion_stream(
+        self,
+        *,
+        messages: list[LLMMessage],
+        system_prompt: str,
+    ) -> AsyncIterator[str]:
+        ...
+```
+
+```python
+from collections.abc import AsyncIterator
+
+import httpx
+
+from app.qa.application.port import LLMMessage, LLMPort
+
+
+class LLMPortAdapter(LLMPort):
+    async def chat_completion_stream(
+        self,
+        *,
+        messages: list[LLMMessage],
+        system_prompt: str,
+    ) -> AsyncIterator[str]:
+        async with httpx.AsyncClient(timeout=30) as client:
+            async with client.stream(
+                "POST",
+                endpoint,
+                headers=headers,
+                json=payload,
+            ) as response:
+                async for line in response.aiter_lines():
+                    ...
+```
+
+上面这个模式对应：
+
+- 抽象能力定义在 `application/port/`
+- 外部依赖接入写在 `adapter/output/port/`
+- 应用层依赖抽象，不直接依赖外部 SDK 细节
+
 ## Cross-Context Example
 
 同一界限上下文内部，领域服务可以被本上下文内其他领域对象或应用服务直接调用。
@@ -70,6 +154,42 @@ app/<context>/
 2. 在 <context-a>/adapter/output/port/ 实现适配器
 3. 不直接依赖 <context-b> 的内部实现细节
 ```
+
+```text
+例如 `learning` 需要调用 `user` 上下文能力：
+1. 在 `app/learning/application/port/` 定义用户能力接口
+2. 在 `app/learning/adapter/output/port/` 写对 `user` 的适配器
+3. 不直接导入 `app/user/domain/` 内部对象
+```
+
+## Real Code Example: Application Service
+
+应用服务负责编排用例，真实代码通常像这样：
+
+```python
+class MiniappAuthCommandService(MiniappAuthUseCase):
+    def __init__(self, *, user_account_port: UserAccountPort):
+        self.user_account_port = user_account_port
+
+    @Transactional()
+    async def bind_and_login(self, *, command: MiniappBindCommand) -> MiniappBindResponseDTO:
+        user_by_unionid, user_by_openid = await self._find_user_by_wechat_identity(
+            openid=str(command.openid),
+            unionid=str(command.unionid) if command.unionid else None,
+        )
+        user = user_by_unionid or user_by_openid
+        if user is None:
+            user = await self.user_account_port.create_user(
+                email=email, password=password, nickname=nickname, role="student"
+            )
+        return self._build_response(user)
+```
+
+这个例子体现：
+
+- 应用服务放在 `application/service/`
+- 应用服务依赖 `Port`
+- 事务、编排、异常控制在应用层完成
 
 ## Lightweight Context Example
 

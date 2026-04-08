@@ -1,0 +1,15 @@
+---
+description: app 目录分层与边界约束
+globs: app/**/*.py
+alwaysApply: false
+---
+
+# App Architecture Rules
+
+- 以 `app/<context>/` 作为业务边界，先判断上下文职责再落代码目录。
+- `domain` 放领域概念与不变量，不依赖 `application`。
+- `application/service` 放用例编排，`application/port` 放跨上下文能力抽象。
+- `adapter/input` 负责输入适配，`adapter/output` 负责外部实现与持久化适配。
+- 跨上下文默认使用 `Port + Adaptor`，不直接依赖对方内部实现。
+- 轻量实现上下文允许在 `application/service` 直接导入 `model` 写 SQL。
+- 采用领域模型的上下文，`repository` 仅属于领域模型路线。

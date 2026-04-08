@@ -25,6 +25,49 @@ tests/
 - `system`：HTTP 接口、鉴权链路、异常映射、异步事件链路
 - `smoke`：手工验证脚本、环境联通性、一次性检查
 
+## Test Level Decision Example
+
+如果这次改动同时涉及聚合规则、仓储实现和 HTTP 接口：
+
+```text
+- 聚合规则：`tests/unit_tests/app/<context>/`
+- Repository / outbox：`tests/integration_tests/app/<context>/`
+- API / 鉴权 / 异常映射：`tests/system_tests/app/<context>/`
+```
+
+## Real Test Example
+
+项目里的单元测试真实形态如下：
+
+```python
+import pytest
+
+from app.qa.adapter.output.port import LLMPortAdapter
+from app.qa.application.port import LLMMessage
+from app.qa.domain.vo import MessageRole
+
+
+@pytest.mark.asyncio
+async def test_llm_port_adapter_requests_openai_compatible_stream(monkeypatch):
+    adapter = LLMPortAdapter()
+    chunks = []
+
+    async for chunk in adapter.chat_completion_stream(
+        messages=[LLMMessage(role=MessageRole.USER, content="你好")],
+        system_prompt="你是助手",
+    ):
+        chunks.append(chunk)
+
+    assert "".join(chunks) == "你好"
+```
+
+这个例子说明：
+
+- 适配器单测放 `tests/unit_tests/app/<context>/adapter/output/port/`
+- 测试名直接体现行为
+- 用 `pytest.mark.asyncio` 跑异步能力
+- 断言聚焦最终可观察结果
+
 ## Execution Examples
 
 ```bash

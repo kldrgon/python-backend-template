@@ -1,0 +1,13 @@
+---
+description: tests 目录分层与 pytest 约束
+globs: tests/**/*.py
+alwaysApply: false
+---
+
+# Testing Conventions
+
+- 先判断本次应补 unit、integration 还是 system 测试。
+- 测试按目录分层，不混跑不同层级。
+- 优先沿用项目既有 `pytest`、`asyncio`、`wait_until` 约定。
+- 新测试放在最小可复用层级，不随意提升到全局层。
+- 修改业务逻辑时，优先补对应层级的最小必要测试。

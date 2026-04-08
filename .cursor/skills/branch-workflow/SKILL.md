@@ -115,7 +115,7 @@ description: Drives a full long-running delivery workflow from branch goal, work
 - 是否偏离当前 commit 目标
 - 是否混入无关改动
 - 是否缺必要测试
-- 是否违反项目分层、命名、API、测试、提交规则
+- 是否违反适用的项目静态规则
 - 是否还能继续拆小
 
 若 quick review 不通过，先修正，再提交。
@@ -194,7 +194,7 @@ description: Drives a full long-running delivery workflow from branch goal, work
 
 ## Mandatory Re-read Points (Must Re-read) IMPORTANT
 
-为了对抗上下文稀释，遇到下面情况时必须重新读取规则，不允许只靠当前记忆继续执行。
+遇到下面情况时，必须重新检查计划、文档和相关规范，不允许只靠当前记忆继续执行。
 
 ### 必须重读本流程的 `SKILL.md`
 
@@ -251,10 +251,12 @@ description: Drives a full long-running delivery workflow from branch goal, work
 
 如果这些占位符是为当前分支临时维护的，默认放在 `DEVELOP_TEMP/<timestamp>/` 下，与当前分支相关文档保持在同一批目录中。
 
-## 何时必须重读其他技术、边界相关的 SKILL
+## 何时必须重读静态规则
 
 - 每次准备开始新的 commit 计划项时
 - quick review 前
+
+先确认当前步骤相关的项目规范；如果细节仍不清楚，再查看 `project-structure-and-rules` 的说明文件。
 
 ## Additional Resources
 

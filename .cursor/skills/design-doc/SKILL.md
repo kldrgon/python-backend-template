@@ -48,13 +48,13 @@ description: Turns incomplete implementation ideas into a confirmable design dra
 
 - 不采用领域模型，不等于没有边界
 - 即使采用轻量实现，也要说明职责归属、依赖方向、为何可以简化
-- 轻量实现的具体规则，回到 `project-structure-and-rules`
+- 轻量实现的具体落点与规范细节，需要时查看 `project-structure-and-rules`
 
 ### 5. Port 与依赖方式要写清楚
 
 - 设计稿只需要说明本次涉及哪些跨上下文能力缺口
 - 设计稿只需要说明哪些依赖不能直接耦合
-- 具体 Port、Adaptor、领域模型、轻量实现规则，回到 `project-structure-and-rules`
+- 具体 Port、Adaptor、领域模型和轻量实现细节，需要时查看 `project-structure-and-rules`
 
 ### 6. 简化决策必须以界限上下文为单位
 
@@ -117,6 +117,7 @@ description: Turns incomplete implementation ideas into a confirmable design dra
 
 ## Required Behavior
 
+- 需要具体代码落点或规范细节时，再补看相关项目规范。
 - 如果边界不清，先补边界，不直接写实现细节。
 - 如果用户需求还明显缺口，先把缺口显式写出来。
 - 不把“是否采用领域模型”写成整个需求的一刀切结论，要按界限上下文分别说明。

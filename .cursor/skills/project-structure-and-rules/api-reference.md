@@ -45,6 +45,39 @@ response/<classification>.py
 - <Capability>ResultResponse
 ```
 
+## Real Code Example
+
+项目里的请求模型会直接放在 `adapter/input/api/v1/request/` 下，例如：
+
+```python
+from pydantic import BaseModel, Field
+
+
+class CreateCourseRequest(BaseModel):
+    title: str = Field(..., min_length=1)
+    summary: list | None = None
+    content: list | None = None
+    graph_id: str | None = Field(default=None, min_length=1)
+    expected_learning_duration_minutes: int | None = Field(default=None, ge=0)
+    cover_blob_id: str | None = Field(default=None, min_length=1)
+```
+
+响应模型也放在 `adapter/input/api/v1/response/` 下，例如：
+
+```python
+from pydantic import BaseModel, Field
+
+
+class RefreshTokenData(BaseModel):
+    access_token: str = Field(..., description="Access Token")
+
+
+class RefreshTokenResponse(BaseModel):
+    code: int = Field(..., description="Response Code")
+    data: RefreshTokenData = Field(..., description="Data")
+    message: str = Field(..., description="Response Message")
+```
+
 ## Route Responsibility Example
 
 路由层通常只做：
