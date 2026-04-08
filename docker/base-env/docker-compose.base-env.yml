@@ -26,7 +26,7 @@ services:
       - base-env-net
 
   kafka:
-    image: bitnami/kafka:latest
+    image: bitnami/kafka:3.9.1
     container_name: backend-base-env-kafka
     restart: unless-stopped
     ports:
