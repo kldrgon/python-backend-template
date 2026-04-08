@@ -80,6 +80,77 @@ config.s3_blob
 config.blob_storage
 ```
 
+## 环境准备
+
+### 1. 搭建 `base-env`
+
+`base-env` 用于提供可持久化的基础依赖环境，适合作为本地长期运行基线。
+
+建议把它主要用于本地开发和联调，不作为默认测试环境。
+
+使用方式：
+
+```shell
+cp docker/base-env/.env.base-env.example docker/base-env/.env.base-env
+docker compose --env-file docker/base-env/.env.base-env -f docker/base-env/docker-compose.base-env.yml up -d
+```
+
+包含的基础服务：
+
+- PostgreSQL
+- Kafka
+- Redis
+- Temporal
+- Temporal UI
+- MinIO（默认注释，可按需启用）
+
+详细说明见 `docker/base-env/README.md`。
+
+### 2. 本地运行需要 `.env`
+
+本地开发前，需要先准备项目根目录下的 `.env` 文件。
+
+建议从示例文件复制：
+
+```shell
+cp .env.example .env
+```
+
+然后按你的本地环境修改数据库、Redis、Kafka、Temporal 等连接信息。
+
+### 3. 测试运行需要 `.env.test`
+
+测试运行前，需要准备项目根目录下的 `.env.test` 文件。
+
+建议从示例文件复制：
+
+```shell
+cp .env.test.example .env.test
+```
+
+建议：
+
+- `.env.test` 专门给测试使用
+- 测试环境优先使用 `docker/dev-env/`
+- `.env.test` 中的连接信息应指向 `dev-env` 提供的 PostgreSQL / Redis / Kafka / Temporal
+- 测试库名建议直接使用 `test_app` 这类带 `test` 前缀的库名
+
+测试配置加载优先级：
+
+- `.env.test`
+- `.env`
+
+也就是测试会优先读取 `.env.test`，再回退到 `.env`。
+
+启动 `dev-env` 的方式：
+
+```shell
+cp docker/dev-env/.env.dev-env.example docker/dev-env/.env.dev-env
+docker compose --env-file docker/dev-env/.env.dev-env -f docker/dev-env/docker-compose.dev-env.yml up -d
+```
+
+`dev-env` 默认更适合测试场景，不做持久化，且默认测试库名为 `test_app`。
+
 ## 快速启动
 
 ### 1. 安装依赖
@@ -114,6 +185,12 @@ uv run pytest
 - 单元测试：纯内存
 - 集成测试：真实 DB
 - 系统测试：真实 DB + Redis + Kafka + Temporal
+
+推荐做法：
+
+- 本地开发依赖使用 `base-env`
+- 测试依赖使用 `dev-env`
+- 测试前准备好 `.env.test`
 
 其中 Blob 系统测试默认会用 `LocalStorageAdapter` 覆盖存储层，不依赖真实 MinIO。
 
